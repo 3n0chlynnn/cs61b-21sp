@@ -94,6 +94,40 @@ public class Model extends Observable {
         setChanged();
     }
 
+
+    public void tiltNorth(Board b) {
+        for (int c = 0; c < b.size(); c++) {          // Merge all the adjacent tiles
+            for (int r = b.size() - 1; r > 0; r--) {
+                if (b.tile(c, r) != null) {                  // Find the first non-empty tile
+                    for (int i = r - 1; i >= 0; i--) {
+                        if (b.tile(c, i) != null) {         // Find the next non-empty tile
+                            if (tile(c, r).value() == b.tile(c, i).value()) {
+                                Tile t = b.tile(c, i);
+                                b.move(c, r, t);
+                                score += t.value() * 2;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        for (int c = 0; c < b.size(); c++) {         // Move the tiles up
+            for (int r = b.size() - 1; r > 0; r--) {
+                if (b.tile(c, r) == null) {                  //Find the first empty tile
+                    for (int i = r - 1; i >= 0; i--) {
+                        if (b.tile(c, i) != null) {          // Find the next non-empty tile
+                            b.move(c, r, b.tile(c, i));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /** Tilt the board toward SIDE. Return true iff this changes the board.
      *
      * 1. If two Tile objects are adjacent in the direction of motion and have
@@ -109,10 +143,35 @@ public class Model extends Observable {
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
+        Board oldBoard = new Board(size());
+        for (int c = 0; c < size(); c++) {     //creating a copy of original board
+            for (int r = 0; r < size(); r++) {
+                if (tile(c, r) != null) {
+                    oldBoard.addTile(this.tile(c, r));
+                }
+            }
+        }
+
+        board.setViewingPerspective(side);
+        tiltNorth(board);
+        board.setViewingPerspective(Side.NORTH);
+
+        for (int c = 0; c < size(); c++) {             // Check if the board is changed
+            for (int r = 0; r < size(); r++) {
+                if (oldBoard.tile(c, r) != this.tile(c, r)) {
+                    changed = true;
+                }
+            }
+        }
+
 
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+
+
+
+
 
         checkGameOver();
         if (changed) {
@@ -133,11 +192,18 @@ public class Model extends Observable {
         return maxTileExists(b) || !atLeastOneMoveExists(b);
     }
 
-    /** Returns true if at least one space on the Board is empty.
+    /** Returns true if at least one space on the Board is ` `.
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        for (int i = 0; i < b.size(); i++) {
+            for (int j = 0; j < b.size(); j++) {
+                if (b.tile(i, j) == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +214,13 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        for (int i = 0; i < b.size(); i++) {
+            for (int j = 0; j < b.size(); j++) {
+                if (b.tile(i, j) != null && b.tile(i, j).value() == MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -159,6 +232,24 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if (emptySpaceExists(b)) {
+            return true;
+        } else {
+            for (int i = 0; i < b.size(); i++) {
+                for (int j = 0; j < b.size(); j++) {
+                    if (i < b.size() - 1) {
+                        if (b.tile(i, j).value() == b.tile(i + 1, j).value()) {
+                            return true;
+                        }
+                    }
+                    if (j < b.size() - 1) {
+                        if (b.tile(i, j).value() == b.tile(i, j + 1).value()) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
         return false;
     }
 
